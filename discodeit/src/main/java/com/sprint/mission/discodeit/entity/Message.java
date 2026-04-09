@@ -1,35 +1,72 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseEntity;
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import java.io.Serial;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.io.Serializable;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import org.hibernate.annotations.BatchSize;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+@Entity
+@Table(name = "messages")
 @Getter
-public class Message extends BaseEntity {
-    private final UUID authorId;
-    private final UUID channelId;
+@EntityListeners(AuditingEntityListener.class)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Message extends BaseUpdatableEntity implements Serializable{
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    @Column(columnDefinition = "text", nullable = false)
     private String content = "";
 
-    public Message(UUID channelId, UUID authorId, String content){
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "channel_id", nullable = false)
+    private Channel channel;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id")
+    private User author;
+
+    @ManyToMany()
+    @BatchSize(size = 100)
+    @JoinTable(
+        name = "message_attachments",
+        joinColumns = @JoinColumn(name = "message_id"),
+        inverseJoinColumns = @JoinColumn(name = "attachment_id")
+    )
+    private List<BinaryContent> attachments = new ArrayList<>();
+
+    public Message(Channel channel, User author, String content, List<BinaryContent> attachments){
         super();
-        this.authorId  = authorId;
-        this.channelId = channelId;
+        this.author  = author;
+        this.channel = channel;
         this.content = content;
+
+        if (attachments != null && !attachments.isEmpty()) {
+            this.attachments = attachments;
+        }
     }
 
     public void updateContent(String content) {
         this.content = content;
-        updateUpdateAt();
     }
 
-    public String toString(){
-        String createAtToString = this.createdAt
-                .atZone(ZoneId.systemDefault())
-                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        return "MESSAGE) UUID: " + this.id + " | Content: " + this.content + " | CreateAt: " + createAtToString;
-    }
 }

@@ -1,34 +1,25 @@
 package com.sprint.mission.discodeit.service;
 
-import com.sprint.mission.discodeit.DTO.ChannelService.CreatePrivateChRequest;
-import com.sprint.mission.discodeit.DTO.ChannelService.CreatePublicChRequest;
-import com.sprint.mission.discodeit.DTO.ChannelService.FindChannelResponse;
-import com.sprint.mission.discodeit.DTO.ChannelService.UpdateChannelRequest;
-import com.sprint.mission.discodeit.entity.Channel;
-import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.Message;
+import com.sprint.mission.discodeit.dto.request.PrivateChannelCreateRequest;
+import com.sprint.mission.discodeit.dto.request.PublicChannelCreateRequest;
+import com.sprint.mission.discodeit.dto.data.ChannelDto;
+import com.sprint.mission.discodeit.dto.request.ChannelUpdateRequest;
 
 import java.util.*;
 
 public interface ChannelService {
 
-    Channel createPrivateChannel(CreatePrivateChRequest createPrivateChRequest);
+    ChannelDto createPrivateChannel(PrivateChannelCreateRequest request);
 
-    Channel createPublicChannel(CreatePublicChRequest createPublicChRequest);
+    ChannelDto createPublicChannel(PublicChannelCreateRequest request);
 
-    void remove(UUID id);
+    void delete(UUID id);
 
-    FindChannelResponse findByID(UUID id);
+    ChannelDto findByID(UUID id);
 
-    List<FindChannelResponse> findAllByUserId(UUID userId);
+    List<ChannelDto> findAll();
 
-    Channel update(UpdateChannelRequest updateChannelRequest);
+    List<ChannelDto> findAllByUserId(UUID userId);
 
-    boolean addMember(UUID channelID, User user);
-
-    boolean removeMember(UUID channelID, User user);
-
-    boolean addMessage(UUID channelID, Message message);
-
-    boolean removeMessage(UUID channelID, Message message);
+    ChannelDto update(UUID id, ChannelUpdateRequest request);
 }

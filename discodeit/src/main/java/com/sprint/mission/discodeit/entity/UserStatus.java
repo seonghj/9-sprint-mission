@@ -1,30 +1,55 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.sprint.mission.discodeit.entity.base.BaseEntity;
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import java.io.Serial;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
+@Entity
+@Table(name = "user_statuses")
 @Getter
-public class UserStatus implements Serializable {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class UserStatus extends BaseUpdatableEntity implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
-    private final UUID id;
-    private final UUID userId;
-    private Instant lastLoginTime;
 
-    public UserStatus(UUID userId){
-        this.id = UUID.randomUUID();
-        this.userId = userId;
+    @JsonBackReference
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", columnDefinition = "uuid")
+    private User user;
+
+    @Column(columnDefinition = "timestamp with time zone", nullable = false)
+    private Instant lastActiveAt;
+
+    public UserStatus(User user){
+        super();
+        this.user = user;
+        this.lastActiveAt = Instant.EPOCH;
     }
 
-    public void refreshLoginTime(){
-        this.lastLoginTime = Instant.ofEpochSecond(System.currentTimeMillis());
+    public void updateLastActiveAt(Instant time){
+        this.lastActiveAt = time;
     }
 
     public boolean checkIsLogin(){
-        Instant now = Instant.ofEpochSecond(System.currentTimeMillis());
-        return Duration.between(now, this.lastLoginTime).toMinutes() <= 5;
+        if (this.lastActiveAt  == null){
+            return false;
+        }
+        return lastActiveAt.isAfter(Instant.now().minus(Duration.ofMinutes(5)));
     }
 }

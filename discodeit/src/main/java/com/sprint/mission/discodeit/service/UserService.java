@@ -1,26 +1,23 @@
 package com.sprint.mission.discodeit.service;
 
-import com.sprint.mission.discodeit.DTO.UserService.FindUserResponse;
-import com.sprint.mission.discodeit.DTO.UserService.UpdateUserRequest;
-import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.DTO.UserService.CreateUserRequest;
+import com.sprint.mission.discodeit.dto.data.UserDto;
+import com.sprint.mission.discodeit.dto.request.BinaryContentCreateRequest;
+import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
+import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
 
 import java.util.*;
+import org.springframework.data.jpa.repository.Query;
 
 public interface UserService {
-    User create(CreateUserRequest createUserRequest);
+    UserDto create(UserCreateRequest request, Optional<BinaryContentCreateRequest> profile);
 
-    void remove(UUID id);
+    UserDto find(UUID userId);
 
-    FindUserResponse findByID(UUID id);
+    List<UserDto> findAll();
 
-    List<FindUserResponse> getAll();
+    UserDto update(UUID userId, UserUpdateRequest userUpdateRequest,
+        Optional<BinaryContentCreateRequest> profileCreateRequest);
 
-    User update(UpdateUserRequest updateUserRequest);
-
-    User updateName(UUID id, String newName);
-
-    User updatePassword(UUID id, String newPassword);
-
-    User updateEmail(UUID id, String newEmail);
+    void delete(UUID userId);
 }

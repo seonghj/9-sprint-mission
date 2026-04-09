@@ -1,27 +1,41 @@
 package com.sprint.mission.discodeit.entity;
 
-import lombok.Getter;
-
+import com.sprint.mission.discodeit.entity.base.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
-import java.nio.file.Path;
 import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
+@Entity
+@Table(name = "binary_contents")
 @Getter
-public class BinaryContent implements Serializable {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class BinaryContent extends BaseEntity implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
-    private final UUID id;
 
-    // 뭘 저장해야할까
-    private final BinaryContentOwnerType ownerType;
-    private final UUID ownerId;
-    public byte[] data;
+    @Column(length = 50, nullable = false)
+    private String fileName;
+    @Column
+    private Long size;
+    @Column(length = 50, nullable = false)
+    private String contentType;
 
-    public BinaryContent(BinaryContentOwnerType ownerType, UUID ownerId, byte[] data){
-        this.id = UUID.randomUUID();
-        this.ownerType = ownerType;
-        this.ownerId = ownerId;
-        this.data = data;
+    @OneToOne(mappedBy = "profile")
+    @ToString.Exclude
+    private User user;
+
+    public BinaryContent(String fileName, Long size, String contentType) {
+        super();
+        this.fileName = fileName;
+        this.size = size;
+        this.contentType = contentType;
     }
-
-
 }

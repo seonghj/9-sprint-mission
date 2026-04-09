@@ -1,58 +1,70 @@
 package com.sprint.mission.discodeit.entity;
 
-import lombok.Getter;
-
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
-import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
-import java.time.*;
-import java.time.format.DateTimeFormatter;
-
+@Entity
+@Table(name = "users")
 @Getter
-public class User extends BaseEntity {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class User extends BaseUpdatableEntity implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-    private UUID profileId;
-    private String name = "";
-    private String email = "";
-    private String password = "";
+    @Column(length = 50, nullable = false, unique = true)
+    private String username;
+    @Column(length = 100, nullable = false, unique = true)
+    private String email;
+    @Column(length = 60, nullable = false)
+    private String password;
 
-    public User(String name, String password, String email){
-        super();
-        this.name = name;
-        this.password = password;
-        this.email = email;
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "profile_id", columnDefinition = "uuid")
+    private BinaryContent profile;
+
+    @JsonManagedReference
+    @Setter(AccessLevel.PROTECTED)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private UserStatus status;
+
+    public User(String userName, String password, String email, BinaryContent profile){
+      super();
+      this.username = userName;
+      this.password = password;
+      this.email = email;
+      this.profile = profile;
     }
 
-    public void updateName(String name){
-        this.name = name;
-        updateUpdateAt();
+    public void updateUserState(UserStatus userStatus){
+        this.status = userStatus;
     }
 
-    public void updatePassword(String password) {
-        this.password = password;
-        updateUpdateAt();
-    }
-
-    public void updateEmail(String email) {
-        this.email = email;
-        updateUpdateAt();
-    }
-
-    public String toString(){
-        String createAtToString = this.createdAt
-                .atZone(ZoneId.systemDefault())
-                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        return "USER) UUID: " + this.id + " | name: " + this.name + " | phone num: " + this.password + " | e-mail: " + this.email
-                + " | Created At: " + createAtToString;
-    }
-
-    public void update(String newName, String password, String newEmail) {
-        if (newName != null)
-            this.name = newName;
-        if (newEmail != null)
+    public void update(String newUsername, String newEmail, String newPassword, BinaryContent newProfile) {
+        if (newUsername != null && !newUsername.equals(this.username)) {
+            this.username = newUsername;
+        }
+        if (newEmail != null && !newEmail.equals(this.email)) {
             this.email = newEmail;
-        if (password != null)
-            this.password = password;
-        updateUpdateAt();
+        }
+        if (newPassword != null && !newPassword.equals(this.password)) {
+            this.password = newPassword;
+        }
+        if (newProfile != null && !newProfile.equals(this.profile)) {
+            this.profile = newProfile;
+        }
     }
 }
