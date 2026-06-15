@@ -6,6 +6,7 @@ import com.sprint.mission.discodeit.entity.Notification;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.NotificationCreatedEvent;
 import com.sprint.mission.discodeit.exception.notification.NotificationAccessDeniedException;
 import com.sprint.mission.discodeit.exception.notification.NotificationNotFoundException;
 import com.sprint.mission.discodeit.mapper.NotificationMapper;
@@ -21,6 +22,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +43,8 @@ public class BasicNotificationService implements NotificationService {
   private final UserRepository userRepository;
 
   private final CacheManager cacheManager;
+
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   @Cacheable(cacheNames = "userNotifications", key = "#receiverId")
@@ -92,6 +96,11 @@ public class BasicNotificationService implements NotificationService {
     if (cache != null) {
       notifications.forEach(n -> cache.evict(n.getReceiverId()));
     }
+
+    notifications.forEach(notification -> {
+      NotificationDto dto = notificationMapper.toDto(notification);
+      eventPublisher.publishEvent(new NotificationCreatedEvent(dto));
+    });
   }
 
   @Override
@@ -108,6 +117,9 @@ public class BasicNotificationService implements NotificationService {
     );
 
     notificationRepository.save(notification);
+
+    NotificationDto dto = notificationMapper.toDto(notification);
+    eventPublisher.publishEvent(new NotificationCreatedEvent(dto));
   }
 
   @Override
@@ -137,6 +149,11 @@ public class BasicNotificationService implements NotificationService {
     }
 
     log.info("{} 명의 관리자에게 알림을 발송했습니다. (title: {})", admins.size(), title);
+
+    notifications.forEach(notification -> {
+      NotificationDto dto = notificationMapper.toDto(notification);
+      eventPublisher.publishEvent(new NotificationCreatedEvent(dto));
+    });
   }
 
 }

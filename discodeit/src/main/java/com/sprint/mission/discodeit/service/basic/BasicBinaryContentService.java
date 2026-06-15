@@ -5,6 +5,7 @@ import com.sprint.mission.discodeit.dto.request.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.BinaryContentStatus;
 import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.BinaryContentUpdatedEvent;
 import com.sprint.mission.discodeit.exception.UploadFileException;
 import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
@@ -141,5 +142,11 @@ public class BasicBinaryContentService implements BinaryContentService {
         content.updateStatus(newStatus);
 
         log.info("바이너리 데이터 상태 업데이트 완료: id={}, status={}", id, newStatus);
+
+      BinaryContentDto updatedDto = binaryContentMapper.toDto(content);
+      
+      UUID uploaderId = content.getUser().getId();
+
+      eventPublisher.publishEvent(new BinaryContentUpdatedEvent(uploaderId, updatedDto));
     }
 }

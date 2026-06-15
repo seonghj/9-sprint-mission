@@ -85,10 +85,12 @@ public class BasicMessageService implements MessageService {
             binaryContents
         ));
 
-        eventPublisher.publishEvent(new MessageCreatedEvent(newMessage.getId()));
+        MessageDto messageDto = messageMapper.toDto(newMessage);
+
+        eventPublisher.publishEvent(new MessageCreatedEvent(newMessage.getId(), channel.getId(), messageDto));
 
         log.info("메시지 생성 완료: messageId={}", newMessage.getId());
-        return messageMapper.toDto(newMessage);
+        return messageDto;
     }
 
     @PreAuthorize("@resourceValidator.isMessageOwner(principal, #messageId)")

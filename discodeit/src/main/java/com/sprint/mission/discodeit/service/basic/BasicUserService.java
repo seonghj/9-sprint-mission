@@ -9,7 +9,9 @@ import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.DomainEventType;
 import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
+import com.sprint.mission.discodeit.event.UserEvent;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
@@ -100,7 +102,10 @@ public class BasicUserService implements UserService {
         userRepository.save(newUser);
 
         log.info("사용자 생성 완료: id={}, username={}, email={}", newUser.getId(), newUser.getUsername(), newUser.getEmail());
-        return userMapper.toDto(newUser);
+        UserDto responseDto = userMapper.toDto(newUser);
+        eventPublisher.publishEvent(new UserEvent(DomainEventType.CREATED, responseDto));
+
+        return responseDto;
     }
 
     @Override
@@ -155,7 +160,10 @@ public class BasicUserService implements UserService {
                 , userUpdateRequest.newPassword()
                 , profileEntity);
         log.info("사용자 정보 수정 완료: id={}", userId);
-        return userMapper.toDto(target);
+        UserDto responseDto = userMapper.toDto(target);
+        eventPublisher.publishEvent(new UserEvent(DomainEventType.UPDATED, responseDto));
+
+        return responseDto;
     }
 
     @Transactional
@@ -168,9 +176,11 @@ public class BasicUserService implements UserService {
           log.warn("삭제 실패: 존재하지 않는 사용자: id={}", id);
           return new UserNotFoundException(id);
         });
+        UserDto deletedDto = userMapper.toDto(removeUser);
         try {
           binaryContentRepository.deleteById(removeUser.getProfile().getId());
           userRepository.deleteById(removeUser.getId());
+          eventPublisher.publishEvent(new UserEvent(DomainEventType.DELETED, deletedDto));
         } catch (Exception e) {
           log.error("사용자 삭제 중 시스템 오류 발생: userId={}, error={}", id, e.getMessage());
           throw new RuntimeException(e);
@@ -190,7 +200,10 @@ public class BasicUserService implements UserService {
 
     eventPublisher.publishEvent(new RoleUpdatedEvent(user.getId()));
 
-    return userMapper.toDto(user);
+    UserDto responseDto = userMapper.toDto(user);
+    eventPublisher.publishEvent(new UserEvent(DomainEventType.UPDATED, responseDto));
+
+    return responseDto;
   }
   public Set<UUID> getOnlineUserIds() {
 
