@@ -112,12 +112,12 @@ public class SecurityConfig {
     logout.logoutUrl("/api/auth/logout")
         .addLogoutHandler(jwtLogoutHandler)
         .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT))
-        .invalidateHttpSession(true)
-        .deleteCookies("JSESSIONID");
+        .invalidateHttpSession(false)
+        .deleteCookies();
   }
 
   private void configureAuthorizeRequests(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
-    auth.requestMatchers("/index.html", "/*.ico", "/assets/**").permitAll() // 정적 리소스 권한
+    auth.requestMatchers("/index.html", "/*.ico", "/assets/**").permitAll()
         .requestMatchers(HttpMethod.GET, "/api/auth/csrf-token").permitAll()
         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
         .requestMatchers("/h2-console/**").permitAll()
@@ -127,15 +127,22 @@ public class SecurityConfig {
         .requestMatchers("/actuator/**").hasRole("ADMIN")
         .requestMatchers("/", "/error").permitAll()
         .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
+        .requestMatchers("/ws/**").permitAll()
+        .requestMatchers("/api/sse/**").authenticated()
         .anyRequest().authenticated();
   }
 
   private void configureExceptionHandling(ExceptionHandlingConfigurer<HttpSecurity> ex) {
     ex.authenticationEntryPoint((request, response, authException) -> {
-          response.setStatus(HttpStatus.UNAUTHORIZED.value());
-          response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-          response.setCharacterEncoding("UTF-8");
-          response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"로그인 필요\"}");
+          if (request.getRequestURI().startsWith("/api/sse")) {
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            response.setContentType(MediaType.TEXT_PLAIN_VALUE);
+            response.getWriter().write("Unauthorized");
+          } else {
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"로그인 필요\"}");
+          }
         })
         .accessDeniedHandler((request, response, accessDeniedException) -> {
           response.setStatus(HttpStatus.FORBIDDEN.value());

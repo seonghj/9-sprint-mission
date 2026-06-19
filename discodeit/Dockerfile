@@ -7,8 +7,7 @@ RUN ./gradlew clean bootJar -x test --no-daemon
 
 FROM amazoncorretto:17-alpine
 WORKDIR /app
-
-COPY --from=build /home/gradle/src/build/libs/*.jar app.jar
+COPY --from=builder /home/gradle/src/build/libs/*.jar app.jar
 
 ENV JVM_OPTS=""
 EXPOSE 80

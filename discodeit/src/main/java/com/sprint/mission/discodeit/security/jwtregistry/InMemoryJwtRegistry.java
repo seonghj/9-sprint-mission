@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Slf4j
-@Component
+//@Component
 @RequiredArgsConstructor
 public class InMemoryJwtRegistry implements JwtRegistry {
 

@@ -3,13 +3,14 @@ server:
 
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USER}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    url: ${DB_URL:jdbc:postgresql://db:5432/discodeit}
+    username: ${DB_USERNAME:myuser}
+    password: ${DB_PASSWORD:mypassword}
     driver-class-name: org.postgresql.Driver
+
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -20,7 +21,7 @@ discodeit:
     local:
       root-path: /var/lib/discodeit/storage
     s3:
-      access-key: ${AWS_S3_ACCESS_KEY}
-      secret-key: ${AWS_S3_SECRET_KEY}
-      region: ${AWS_S3_REGION}
-      bucket: ${AWS_S3_BUCKET}
+      access-key: ${AWS_S3_ACCESS_KEY:dummy-access-key}
+      secret-key: ${AWS_S3_SECRET_KEY:dummy-secret-key}
+      region: ${AWS_S3_REGION:ap-northeast-2}
+      bucket: ${AWS_S3_BUCKET:dummy-bucket}

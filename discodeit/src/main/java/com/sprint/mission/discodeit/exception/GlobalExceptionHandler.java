@@ -9,11 +9,13 @@ import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
 import com.sprint.mission.discodeit.exception.security.NotExistRefreshTokenException;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -24,7 +26,23 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleException(Exception e) {
+    public ResponseEntity<ErrorResponse> handleException(Exception e, HttpServletRequest request) {
+      if (request.getRequestURI().startsWith("/api/sse")) {
+        ErrorResponse response = new ErrorResponse(
+            Instant.now(),
+            "SSE Connection Error",
+            "e.getMessage()",
+            null,
+            e.getClass().getSimpleName(),
+            HttpStatus.INTERNAL_SERVER_ERROR.value()
+        );
+
+        return ResponseEntity
+            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .contentType(MediaType.TEXT_PLAIN)
+            .body(response);
+      }
+
         HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
         ErrorResponse response = new ErrorResponse(
             Instant.now(),
