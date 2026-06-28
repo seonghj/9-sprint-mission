@@ -3,8 +3,10 @@ package com.sprint.mission.discodeit.security;
 import com.sprint.mission.discodeit.dto.data.UserDto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor
 @AllArgsConstructor
 public class JwtInformation {
   private UserDto userDto;

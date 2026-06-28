@@ -95,7 +95,7 @@ public class SecurityConfig {
   private void configureCsrf(CsrfConfigurer<HttpSecurity> csrf) {
     csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
         .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
-        .ignoringRequestMatchers("/h2-console/**");
+        .ignoringRequestMatchers("/h2-console/**", "/api/auth/refresh");
   }
 
   private void configureHeader(HeadersConfigurer<HttpSecurity> headers){

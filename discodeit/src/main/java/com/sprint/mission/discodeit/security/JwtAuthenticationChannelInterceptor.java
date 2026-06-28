@@ -1,15 +1,17 @@
 package com.sprint.mission.discodeit.security;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.MessageDeliveryException;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Component;
 public class JwtAuthenticationChannelInterceptor implements ChannelInterceptor {
 
   private final JwtTokenProvider jwtTokenProvider;
+  private final JwtRegistry jwtRegistry;
   private final UserDetailsService userDetailsService;
 
   @Override
@@ -27,28 +30,36 @@ public class JwtAuthenticationChannelInterceptor implements ChannelInterceptor {
     StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
     if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-      String authHeader = accessor.getFirstNativeHeader("Authorization");
+      try {
+        List<String> authorization = accessor.getNativeHeader("Authorization");
 
-      if (authHeader != null && authHeader.startsWith("Bearer ")) {
-        String token = authHeader.substring(7);
+        if (authorization != null && !authorization.isEmpty()) {
+          String bearerToken = authorization.get(0);
 
-        if (jwtTokenProvider.validateToken(token)) {
-          String username = jwtTokenProvider.getUsername(token);
+          if (bearerToken.startsWith("Bearer ")) {
+            String token = bearerToken.substring(7).trim();
 
-          UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            if (jwtRegistry.hasActiveJwtInformationByAccessToken(token)) {
 
-          UsernamePasswordAuthenticationToken authentication =
-              new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+              String username = jwtTokenProvider.getUsername(token);
+              UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-          accessor.setUser(authentication);
-          log.info("웹소켓 인증 성공: {}", username);
+              UsernamePasswordAuthenticationToken authentication =
+                  new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+              SecurityContextHolder.getContext().setAuthentication(authentication);
+              accessor.setUser(authentication);
+
+            } else {
+              throw new IllegalArgumentException("Redis에 존재하지 않는 만료된 토큰입니다.");
+            }
+          }
         } else {
-          log.warn("유효하지 않은 웹소켓 토큰입니다.");
-          throw new IllegalArgumentException("Invalid Token");
+          log.warn("웹소켓 연결 시도 중 Authorization 헤더가 없습니다.");
         }
-      } else {
-        log.warn("웹소켓 연결 요청에 토큰이 포함되어 있지 않음.");
-        throw new IllegalArgumentException("Token Missing");
+      } catch (Exception e) {
+        log.error("웹소켓 JWT 인증 실패: ", e);
+        throw new MessageDeliveryException("웹소켓 인증 에러: " + e.getMessage());
       }
     }
     return message;

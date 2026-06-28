@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.config;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import java.time.Duration;
 import org.springframework.cache.annotation.EnableCaching;
@@ -20,11 +21,14 @@ public class CacheConfig {
   public RedisCacheConfiguration redisCacheConfiguration(ObjectMapper objectMapper) {
     ObjectMapper redisObjectMapper = objectMapper.copy();
 
-    redisObjectMapper.activateDefaultTyping(
-        LaissezFaireSubTypeValidator.instance,
-        DefaultTyping.EVERYTHING,
-        As.PROPERTY
-    );
+    BasicPolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
+        .allowIfBaseType(Object.class)
+        .allowIfSubType("com.sprint.mission.discodeit.dto.")
+        .allowIfSubType("java.util.")
+        .allowIfSubType("java.time.")
+        .build();
+
+    redisObjectMapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.NON_FINAL);
 
     return RedisCacheConfiguration.defaultCacheConfig()
         .serializeValuesWith(

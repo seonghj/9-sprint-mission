@@ -178,7 +178,9 @@ public class BasicUserService implements UserService {
         });
         UserDto deletedDto = userMapper.toDto(removeUser);
         try {
-          binaryContentRepository.deleteById(removeUser.getProfile().getId());
+          if (removeUser.getProfile() != null) {
+            binaryContentRepository.deleteById(removeUser.getProfile().getId());
+          }
           userRepository.deleteById(removeUser.getId());
           eventPublisher.publishEvent(new UserEvent(DomainEventType.DELETED, deletedDto));
         } catch (Exception e) {

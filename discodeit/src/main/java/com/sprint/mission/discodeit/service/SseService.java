@@ -92,10 +92,7 @@ public class SseService {
   }
 
 
-  @KafkaListener(
-      topics = SSE_TOPIC,
-      groupId = "sse-group-#{T(java.util.UUID).randomUUID().toString()}"
-  )
+  @KafkaListener(topics = "sse-topic", groupId = "sse-group-#{T(java.util.UUID).randomUUID().toString()}")
   public void consumeSseEvent(SseEventPayload payload) {
     Collection<SseEmitter> localEmitters = emitterRepository.findAllByUserId(payload.receiverId());
 

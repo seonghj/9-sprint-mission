@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.storage.s3;
 import com.sprint.mission.discodeit.config.s3.AwsProperties;
 import com.sprint.mission.discodeit.dto.data.BinaryContentDto;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.time.Duration;
@@ -18,17 +19,24 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 @Slf4j
 @Component
 @ConditionalOnProperty(name = "discodeit.storage.type", havingValue = "s3")
+@Retryable(
+    retryFor = {S3Exception.class, SdkClientException.class, IOException.class},
+    maxAttempts = 3,
+    backoff = @Backoff(delay = 2000, multiplier = 2)
+)
 public class S3BinaryContentStorage implements BinaryContentStorage {
 
   private static final String BASE_DIR = "images/";

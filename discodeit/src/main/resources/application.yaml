@@ -52,7 +52,7 @@ spring:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     consumer:
       group-id: discodeit-group
       auto-offset-reset: earliest
@@ -96,8 +96,8 @@ info:
 
 
 jwt:
-  secret: bXktand0LXNlY3JldC1rZXktZm9yLXNwcmluZy1zZWN1cml0eQ==
-  access-token-validity-seconds: 30
+  secret: ${JWT_SECRET}
+  access-token-validity-seconds: 1800
   refresh-token-validity-seconds: 604800
 
 
